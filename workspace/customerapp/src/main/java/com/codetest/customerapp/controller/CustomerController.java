@@ -1,0 +1,64 @@
+package com.codetest.customerapp.controller;
+
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import src.main.java.com.codetest.customerapp.enums.Department;
+import src.main.java.com.codetest.customerapp.model.Customer;
+import src.main.java.com.codetest.customerapp.service.CustomerService;
+
+@Controller
+public class CustomerController {
+
+	@Autowired
+	private CustomerService customerService;
+
+	@RequestMapping(value = "/customer/add", method = RequestMethod.POST)
+	public String addCustomer(Model model, @Valid Customer customer, BindingResult bindingResult) {
+		model.addAttribute("customer", customer);
+		// Validation
+		if (bindingResult.hasErrors()) {
+			model.addAttribute("listCustomer", this.customerService.listCustomers());
+			model.addAttribute("enumDepartment", Department.values());
+			return "customerView";
+		}
+
+		if (customer.getId() == 0) {
+			// new customer therefore save
+			this.customerService.addCustomer(customer);
+		} else {
+			// existing user therefore update
+			this.customerService.updateCustomer(customer);
+		}
+		return "redirect:/customer.html";
+	}
+
+	@RequestMapping(value = "/customer", method = RequestMethod.GET)
+	public String listCustomers(Model model) {
+		model.addAttribute("customer", new Customer());
+		model.addAttribute("listCustomer", this.customerService.listCustomers());
+		model.addAttribute("enumDepartment", Department.values());
+		return "customerView";
+	}
+
+	@RequestMapping("/edit/{id}")
+	public String editCustomer(@PathVariable("id") int id, Model model) {
+		model.addAttribute("customer", this.customerService.getCustomerById(id));
+		model.addAttribute("listCustomer", this.customerService.listCustomers());
+		model.addAttribute("enumDepartment", Department.values());
+		return "customerView";
+	}
+
+	@RequestMapping("/remove/{id}")
+	public String removeCustomer(@PathVariable("id") int id, Model model) {
+		this.customerService.removeCustomer(id);
+		return "redirect:/customer.html";
+	}
+}
